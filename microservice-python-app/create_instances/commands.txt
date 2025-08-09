@@ -1,0 +1,77 @@
+#connection of kubectl with cli
+aws eks update-kubeconfig --name microservices-cluster --region ap-south-1
+
+
+#know pods
+kubectl get pods
+
+#know namespaces
+kubectl get ns
+
+
+cd Helm_charts/MongoDB
+helm install mongo .
+kubectl get pods
+kubectl get pods -w         #watch mode
+kubectl get all 
+kubectl get pv     #policy
+
+cd Helm_charts/Postgres
+helm install postgres .
+kubectl get all 
+
+cd Helm_charts/RabbitMQ
+helm install rabbit .
+kubectl get all 
+
+#mongodb connection
+mongosh mongodb://nasi:nasi1234@65.0.204.70:30005/mp3s?authSource=admin
+
+#mongodb queries
+db
+db.fs.files.find({}, { filename: 1, uploadDate: 1, length: 1 }).pretty()
+
+psql 'postgres://anruag:BadeChote@13.203.73.121:30003/authdb'
+http://13.203.73.121:30004/        #access rabbitMQ via browser
+--------
+#do same thing for all service like auth, notification, gateway, converter
+#docker building
+docker build -t auth .
+
+#docker tagging
+docker tag auth:latest anurag30122003/auth
+docker images
+
+#docker pushing
+docker push anurag30122003/auth
+
+
+---------
+
+#go to manifest directory under each service and deploy into cluster 
+cd src/auth-service/manifest
+
+kubectl apply -f .
+kubectl get all 
+kubectl get pods -w
+
+#scaling down the converter service of replicas from 4 to 2
+kubectl scale deployment converter --replicas 2
+
+
+
+
+#login
+curl -X POST http://65.0.204.70:30002/login -u aj.30122003@gmail.com:123456
+
+#upload
+curl -X POST -F 'file=@./video.mp4' -H 'Authorization: Bearer <JWT Token>' http://65.0.204.70:30002/upload
+#example
+curl -X POST -F "file=@video.mp4" \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6ImFqLjMwMTIyMDAzQGdtYWlsLmNvbSIsImV4cCI6MTc0NDQ4MjQyNSwiaWF0IjoxNzQ0Mzk2MDI1LCJhZG1pbiI6dHJ1ZX0.wASDfBxhEv66a0eUT5Oyv57JQxrS1QCbDE9PU2FUHqM" \
+  http://65.0.204.70:30002/upload
+
+#download
+ curl --output video.mp3 -X GET -H 'Authorization: Bearer <JWT Token>' "http://65.0.204.70:30002/download?fid=<Generated fid>"
+#example
+ curl --output video.mp3 -X GET -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6ImFqLjMwMTIyMDAzQGdtYWlsLmNvbSIsImV4cCI6MTc0NDQ4MjQyNSwiaWF0IjoxNzQ0Mzk2MDI1LCJhZG1pbiI6dHJ1ZX0.wASDfBxhEv66a0eUT5Oyv57JQxrS1QCbDE9PU2FUHqM' "http://65.0.204.70:30002/download?fid=67f96119f270b2e10e913bcc"
